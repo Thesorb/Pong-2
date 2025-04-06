@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gorilla Pong</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #228B22;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    canvas {
+      border: 5px solid #fff;
+      background: url('https://i.imgur.com/V7H2H8M.png'); /* image jungle */
+      background-size: cover;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const paddleWidth = 30, paddleHeight = 120;
+  const ballSize = 30;
+  let paddle1Y = canvas.height/2 - paddleHeight/2;
+  let paddle2Y = canvas.height/2 - paddleHeight/2;
+  let paddleSpeed = 8;
+
+  let ballX = canvas.width / 2;
+  let ballY = canvas.height / 2;
+  let ballSpeedX = 6;
+  let ballSpeedY = 4;
+
+  const keys = {};
+
+  const laughSound1 = new Audio("https://www.soundjay.com/human/laugh-2.mp3");
+  const laughSound2 = new Audio("https://www.soundjay.com/human/laugh-3.mp3");
+
+  document.addEventListener("keydown", (e) => keys[e.key] = true);
+  document.addEventListener("keyup", (e) => keys[e.key] = false);
+
+  function drawGorilla(x, y, flip = false) {
+    ctx.save();
+    ctx.translate(x, y);
+    if (flip) ctx.scale(-1, 1);
+    ctx.fillStyle = "brown";
+    ctx.beginPath();
+    ctx.arc(0, 0, 40, 0, Math.PI * 2); // tête
+    ctx.fill();
+    ctx.fillStyle = "#000";
+    ctx.fillRect(-15, 40, 30, 80); // corps
+    ctx.restore();
+  }
+
+  function draw() {
+    // Efface tout
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Gorille gauche
+    drawGorilla(65, paddle1Y + paddleHeight/2);
+    // Gorille droit
+    drawGorilla(canvas.width - 65, paddle2Y + paddleHeight/2, true);
+
+    // Balle (banane stylée)
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.ellipse(ballX, ballY, ballSize/2, ballSize/3, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function update() {
+    // Déplacements
+    if (keys["w"] && paddle1Y > 0) paddle1Y -= paddleSpeed;
+    if (keys["s"] && paddle1Y < canvas.height - paddleHeight) paddle1Y += paddleSpeed;
+    if (keys["ArrowUp"] && paddle2Y > 0) paddle2Y -= paddleSpeed;
+    if (keys["ArrowDown"] && paddle2Y < canvas.height - paddleHeight) paddle2Y += paddleSpeed;
+
+    // Balle
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
+
+    if (ballY <= 0 || ballY >= canvas.height) ballSpeedY *= -1;
+
+    // Collision gauche
+    if (ballX - ballSize/2 <= 95 && ballY > paddle1Y && ballY < paddle1Y + paddleHeight) {
+      ballSpeedX *= -1;
+      laughSound1.play();
+    }
+
+    // Collision droite
+    if (ballX + ballSize/2 >= canvas.width - 95 && ballY > paddle2Y && ballY < paddle2Y + paddleHeight) {
+      ballSpeedX *= -1;
+      laughSound2.play();
+    }
+
+    // Point marqué
+    if (ballX < 0 || ballX > canvas.width) {
+      ballX = canvas.width / 2;
+      ballY = canvas.height / 2;
+      ballSpeedX = -ballSpeedX;
+      ballSpeedY = 4 * (Math.random() > 0.5 ? 1 : -1);
+    }
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+</script>
+</body>
+</html>
